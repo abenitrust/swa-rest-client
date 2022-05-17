@@ -1,14 +1,17 @@
 package swa.application.swarestclient.domain;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShoppingCartProduct {
-    private Long productNumber;
-    private int quantity;
-    private double price;
+
+public class Customers {
+    List<Customer> customerList;
+
 }
