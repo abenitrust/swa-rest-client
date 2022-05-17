@@ -12,11 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-
 	@Id
 	private String orderNumber;
-	private String customerID;
-	private CustomerInfo customerInfo;
-	private List<OrderLine> orderLines;
+	private Customer customer;
+	private List<OrderLine> orderLineList;
 
 }

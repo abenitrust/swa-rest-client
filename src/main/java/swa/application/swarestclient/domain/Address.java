@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShoppingCartCustomer {
-    private String customerId;
-    private Long cartNumber;
-
+public class Address {
+    private String street;
+    private String city;
+    private String zip;
 }
+

@@ -13,7 +13,9 @@ import swa.application.swarestclient.domain.*;
 public class SwaRestClientApplication implements CommandLineRunner {
 
     @Autowired
-    private RestOperations restTemplate;
+    ClientInterface client;
+
+    private final String baseUrl = "http://localhost:8080";
 
     public static void main(String[] args) {
         SpringApplication.run(SwaRestClientApplication.class, args);
@@ -21,148 +23,105 @@ public class SwaRestClientApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        String customerUrl = "http://localhost:8001/customer-service/customer";
-        String productUrl = "http://localhost:8002/product-service/products";
-        String orderUrl = "http://localhost:8003/order-service/orders";
-        String shoppingCartUrl = "http://localhost:8009/cart-command-service/carts";
-        String shoppingCartServiceUrl = "http://localhost:8008/cart-query-service/carts";
 
-        /**** 1. Add a number of products to the product service ****/
-        //add product1 - book
-        restTemplate.postForLocation(productUrl, new Product(
-                "1",
-                "Book",
-                10.20,
-                "Amazing book",
-                100
-        ));
+        System.out.println("=============Get Products=============");
+        System.out.println(client.getProducts());
 
-        //add product2 - shoes
-        restTemplate.postForLocation(productUrl, new Product(
-                "2",
-                "Computer",
-                1800.00,
-                "Lenovo Yoga",
-                50
-        ));
+        System.out.println("=============adding Product: Macbook...=============");
+        Product product= new Product();
+        product.setName("MacBook pro");
+        product.setPrice(2000.0);
+        product.setDescription("256 gb storage 16 RAM");
+        product.setNumberInStock(10);
+        client.addProduct(product);
 
-        /** 2. Retrieve products in the product service ****/
-        // get product1
-        System.out.println("----------- getting product1 -> book -----------------------");
-        Product product1 = restTemplate.getForObject(productUrl + "/{productNumber}", Product.class, "1");
-        System.out.println(product1);
+        System.out.println("=============adding Product: Samsung 21...=============");
+        Product prod2= new Product();
+        prod2.setName("Samsung 21");
+        prod2.setPrice(1200.0);
+        prod2.setDescription("128gb 8 RAM");
+        prod2.setNumberInStock(4);
+        client.addProduct(prod2);
 
-        // get product2
-        System.out.println("----------- getting product2 -> shoes -----------------------");
-        Product product2 = restTemplate.getForObject(productUrl + "/{productNumber}", Product.class, "2");
-        System.out.println(product2);
+        System.out.println("============= Get All Products=============");
+        var allProducts= client.getProducts();
+        System.out.println(allProducts);
 
+        //edit product
+        System.out.println("==Edit Product from Macbook to lenovo yoga======");
+        Product product1 = allProducts.getProducts().get(0);
+        Product product2 = allProducts.getProducts().get(1);
+        product1.setName("Lenovo Yoga");
+        product1.setPrice(1200.0);
+        product1.setDescription("125 gb storage 16 RAM");
+        product1.setNumberInStock(5);
+        client.modifyProduct(product1,product1.getProductNumber());
+        var editedProduct= client.getProducts();
+        System.out.println(editedProduct);
+//
+//
+        //create and get cutomers
+        System.out.println("============= Create Customer ... =============");
+        Customer cust1= new Customer();
+        cust1.setFirstName("Serke");
+        cust1.setLastName("H");
+        cust1.setEmail("se@gmail.com");
+        cust1.setPhone("1243215436");
+        cust1.setAddress(new Address("1000 North st", "Fairfield", "52557"));
+        restTemplate().postForLocation(baseUrl+"/customer/save", cust1, Customer.class);
+        System.out.println("============= get Customer number one=============");
+        var customers= restTemplate().getForObject(baseUrl+"/customer/findall", Customers.class);
+        var customer1= customers.getCustomerList().get(0);
+        System.out.println(customer1);
 
-        /**** 3. Modify a product in the productservice ****/
-        // modify product1's stock
-        product1.setNumberInStock(200);
-        restTemplate.put(productUrl + "/{productNumber}", product1, product1.getProductNumber());
+//
+        //Create shopping cart to a customer
+        System.out.println("============= Create cart to Customer1 ...=============");
+        restTemplate().postForLocation(baseUrl+"/cart/addCartForACustomer/"+ customer1.getCustomerId(), null, ShoppingCart.class);
 
-        // get and confirm modified product
-        Product modifiedProduct = restTemplate.getForObject(productUrl + "/{productNumber}", Product.class, "1");
-        System.out.println("----------- get modified Product1 -> shoes with numberInStock changed to 200 -----------------------");
-        System.out.println(modifiedProduct);
+        //add product(Hp) to cart of customer1
+        System.out.println("============= Put product1 to cart of customer1 .... =============");
+        restTemplate().postForLocation(baseUrl+"/cart/addProductToCartWithQuantity/" +customer1.getCustomerId()+"/quantity/"+ 4, product1, Products.class);
+        restTemplate().postForLocation(baseUrl+"/cart/addProductToCartWithQuantity/" +customer1.getCustomerId()+"/quantity/"+ 2, product2, Products.class);
 
+        // Show the shopping cart of customer1
+        System.out.println("============= Get shopping cart of customer1=============");
+        ShoppingCart cart= restTemplate().getForObject(baseUrl+"/cartQuery/getShoppingCart/"+customer1.getCustomerId(), ShoppingCart.class);
+        System.out.println(cart);
 
+        // delete product1(Hp) from cart
+        System.out.println("============= Deleting product 1(Hp) from cart of customer1..=============");
+        restTemplate().delete(baseUrl+ "/cart/removeProductFromCart/"+customer1.getCustomerId()+"/product/"+product2.getProductNumber(), Void.class);
 
-        // Create a customer
-        Customer customer1 = new Customer(
-                "customer1",
-                "Suzy",
-                "James",
-                "1000 street",
-                "Fairfield",
-                "52557",
-                "12345678",
-                "suzyjames@gmail.com"
-        );
-        restTemplate.postForLocation(customerUrl + "/add", customer1);
+        //Change the quantity of one of the products
+        int quantity2= 1;
+        restTemplate().delete(baseUrl+"/cart/removeProductFromCartWithQuantity/"+customer1.getCustomerId()+"/product/"+product1.getProductNumber()+"/quantity/"+quantity2, product1, Products.class);
 
-        // get the added Customer
-        Customer customer = restTemplate.getForObject(customerUrl + "/{cId}", Customer.class, "customer1");
-        System.out.println("----------- getting customer1 -> Suzy James -----------------------");
-        System.out.println(customer);
+//        Retrieve and show the shoppingCart
+        System.out.println(restTemplate().getForObject(baseUrl+"/cartQuery/getShoppingCart/"+customer1.getCustomerId(), ShoppingCart.class));
+//
 
+        //Checkout the shoppingCart
+        System.out.println("== Checkout and place an order ==");
 
+        Order order = restTemplate().postForObject(baseUrl+"/cart/checkout/"+customer1.getCustomerId(),null, Order.class);
+//
+//        //Order palced
+        System.out.println("============= Placing an order .... =============");
+        restTemplate().postForObject(baseUrl+"/order/placeOrder/orderNumber/" + order.getOrderNumber(),customer1, Void.class);
+//
+        //Retrieve and show the shoppingcart
+        System.out.println("============= Getting shopping cart (should be empty) .... =============");
+        System.out.println(restTemplate().getForObject(baseUrl+"/cartQuery/getShoppingCart/"+ customer1.getCustomerId(), ShoppingCart.class));
 
-        /**** 10. Add customer to order ****/
-        // - First create a shopping cart for customer1 using the shopping cart command service
-        Long shoppingCartNumber = 1L;
-        ShoppingCartCustomer shoppingCartCustomer = new ShoppingCartCustomer(customer1.getCId(), shoppingCartNumber);
-        restTemplate.postForLocation(shoppingCartUrl, shoppingCartCustomer);
-
-
-
-        /**** 4. Put some products in the shoppingcart  ****/
-        //- Put product1 to the shopping cart
-        ShoppingCartProduct shoppingCartProduct1 = new ShoppingCartProduct(
-                Long.parseLong(product1.getProductNumber()),
-                8,
-                product1.getPrice());
-        restTemplate.postForLocation(shoppingCartUrl + "/{cartId}/products", shoppingCartProduct1, shoppingCartNumber);
-
-        //- Also put product2 to the shopping cart
-        ShoppingCartProduct shoppingCartProduct2 = new ShoppingCartProduct(
-                Long.parseLong(product2.getProductNumber()),
-                23,
-                product2.getPrice());
-        restTemplate.postForLocation(shoppingCartUrl + "/{cartId}/products", shoppingCartProduct2, shoppingCartNumber);
-
-
-
-        /**** 5. Retrieve and show the shopping cart  ****/
-        // get the shopping cart from the shopping cart query service
-        ShoppingCart shoppingCart = restTemplate.getForObject(shoppingCartServiceUrl + "/{cartNumber}", ShoppingCart.class, shoppingCartNumber);
-        System.out.println("----------- getting the shopping cart with two products in it -----------------------");
-        System.out.println(shoppingCart);
-
-
-        /**** 7. Change the quantity of one of the products in the shopping cart ****/
-        // change the quantity of product1 in the shopping cart from 8 to 5
-        restTemplate.put(shoppingCartUrl + "/{cartId}/products/{productNumber}", new Quantity(5), shoppingCartNumber, product1.getProductNumber());
-
-
-        /**** 6. Delete one product from the shopping cart ****/
-        // delete product2 from the shopping cart
-        restTemplate.delete(shoppingCartUrl + "/{cartId}/products/{productNumber}", shoppingCartNumber, product2.getProductNumber());
-
-
-
-        /**** 8. Retrieve and show the shopping cart  ****/
-        // get the updated shopping cart for display
-        // add a sleep to allow for eventual consistency updating of the query service
-        Thread.sleep(2000);
-        ShoppingCart shoppingCartUpdated = restTemplate.getForObject(shoppingCartServiceUrl + "/{cartNumber}", ShoppingCart.class, shoppingCartNumber);
-        System.out.println("----------- getting the updated shopping cart, now with one product -----------------------");
-        System.out.println(shoppingCartUpdated);
-
-
-
-        /**** 9. Checkout the shopping cart  ****/
-        String checkoutMessage = restTemplate.getForObject(shoppingCartUrl + "/{cartId}/checkout",  String.class, shoppingCartNumber);
-        System.out.println("----------- checking out and sending the order to order service -----------");
-        /**** 12. Place the order  ****/
-        System.out.println(checkoutMessage);
-
-
-
-        /**** 11. Retrieve and show the order  ****/
-        // retrieve order for customer1
-        Orders order = restTemplate.getForObject(orderUrl + "/customers/{customerID}", Orders.class, "customer1");
-        System.out.println("----------- getting order1 for customer1 -----------------------");
-        System.out.println(order);
+        System.out.println("============= Get all order =============");
+        System.out.println(restTemplate().getForObject(baseUrl+"/order/getOrders", Orders.class));
 
     }
 
     @Bean
-    RestOperations restTemplate() {
+    public RestTemplate restTemplate(){
         return new RestTemplate();
     }
-
 
 }
