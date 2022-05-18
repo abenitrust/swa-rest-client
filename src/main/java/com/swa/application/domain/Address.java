@@ -4,12 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class ShoppingCart {
-    private String shoppingCartNumber;
-    private List<CartLine> cartLines;
+public class Address {
+    private String street;
+    private String city;
+    private String zip;
 }

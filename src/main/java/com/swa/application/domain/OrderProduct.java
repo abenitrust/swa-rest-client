@@ -4,10 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
-public class OrderLine {
-    private OrderProduct product;
-    private int quantity;
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderProduct {
+    private String productNumber;
 }
