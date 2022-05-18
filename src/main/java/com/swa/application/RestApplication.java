@@ -82,7 +82,7 @@ public class RestApplication implements CommandLineRunner {
         product1 = restTemplate.getForObject(productUrl + "/{productNumber}", Product.class, "1");
         System.out.println("----------- get modified Product1 -> shoes with numberInStock changed to 200 -----------------------");
         System.out.println(product1);
-        System.out.println("");`
+        System.out.println("");
         product2 = restTemplate.getForObject(productUrl + "/{productNumber}", Product.class, "2");
         System.out.println("----------- get modified Product2 -> shoes with price changed to 50 -----------------------");
         System.out.println(product2);
