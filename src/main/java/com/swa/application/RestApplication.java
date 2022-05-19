@@ -110,7 +110,7 @@ public class RestApplication implements CommandLineRunner {
         CartProduct cartProduct1 = new CartProduct(
                 product1.getProductNumber(),
                 cart.getShoppingCartNumber(),
-                5
+                8
         );
 
         restTemplate.put(shoppingCartCommand + "/product/add", cartProduct1);
